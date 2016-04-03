@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Robin Grow
 // @namespace    http://tampermonkey.net/
-// @version      1.705
+// @version      1.810
 // @description  Try to take over the world!
 // @author       /u/mvartan
 // @include      https://www.reddit.com/robin*
@@ -162,6 +162,7 @@
     Settings.addBool("removeSpam", "Remove bot spam", true);
     Settings.addBool("findAndHideSpam", "Removes messages that have been send more than 3 times", true);
     Settings.addInput("channel", "Channel filter", "");
+    Settings.addInput("maxprune", "Max messages before pruning", "500");
     Settings.addBool("filterChannel", "Filter by channel", false);
     // Options end
 
@@ -194,6 +195,14 @@
                     break;
                 }
             }
+        } else if(code == '13') {
+            if(settings.filterChannel &&
+                String(settings.channel).length > 0) {
+
+                    setTimeout(function() {
+                        $(".text-counter-input").val(settings.channel+" ");
+                    }, 10);
+                }
         }
     });
 
@@ -284,10 +293,15 @@
 
     function findAndHideSpam() {
         if (settings.findAndHideSpam) {
-            var $messages = $(".robin--user-class--user");
+            var $messages = $(".robin-message");
 
-            if ($messages.length > 250) {
-                $messages.slice(0, $messages.length - 250).remove();
+            var maxprune = parseInt(settings.maxprune || "1000", 10);
+            if (maxprune < 10 || isNaN(maxprune)) {
+                maxprune = 1000;
+            }
+
+            if ($messages.length > maxprune) {
+                $messages.slice(0, $messages.length - maxprune).remove();
             }
 
             // skips over ones that have been hidden during this run of the loop
